@@ -1,14 +1,19 @@
+import binascii
 import hashlib
 import os
 
-def generateSaltAndHash(password):
-    salt = os.urandom(32)
-    hashed_pw = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 1000)
-    return (salt, hashed_pw)
 
-def validatePassword(password, salt, hashed_pw):   
-    new_hashed_pw = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 1000)
-    if hashed_pw == new_hashed_pw:
+def generateSaltAndHash(password):
+    salt = hashlib.sha256(os.urandom(16)).hexdigest().encode('ascii')
+    hashed_pw = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), salt, 100)
+    hashed_pw = binascii.hexlify(hashed_pw)
+    return (salt.decode('ascii'), hashed_pw.decode('ascii'))
+
+def validatePassword(password, salt, stored_pw):   
+    new_hashed_pw = hashlib.pbkdf2_hmac('sha512', password.encode('ascii'), salt.encode('ascii'), 100)
+    new_hashed_pw = binascii.hexlify(new_hashed_pw).decode('ascii')
+
+    if stored_pw == new_hashed_pw:
         return True
     else: 
         return False

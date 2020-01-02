@@ -1,8 +1,9 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Date
 import auth
 import os
 import random
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Date
+
 
 Base = declarative_base()
 
@@ -22,10 +23,10 @@ class User(Base):
         self.last_name = last_name
         self.email = email
         
-        salt, hashed_pw = auth.generateSaltAndHash(password) 
+        salt, hashed_password = auth.generateSaltAndHash(password) 
 
         self.salt = salt
-        self.hashed_password = hashed_pw
+        self.hashed_password = hashed_password
     
 
 class Car(Base):

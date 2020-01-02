@@ -1,10 +1,12 @@
-from flask import Flask, request
-import backend 
-import psycopg2
 import json.encoder
+from flask import Flask, request
+from flask_cors import CORS
+
+import backend 
+
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route("/users", methods=['GET'])
 def getUserInfo():
@@ -12,32 +14,37 @@ def getUserInfo():
 	return(user_info)
 
 
-@app.route("/users", methods=['Post'])
+@app.route("/users", methods=['POST'])
 def createUser():
-	backend.addUser()
-	return("200")
+	return(backend.addUser())
 
 
 @app.route("/cars", methods=['GET'])
 def getCars():
-	return(json.dumps(backend.getCarsByOwner()))
+	return(backend.getCarsByOwner())
 
 
 @app.route("/cars", methods=['POST'])
 def addCar():
-	backend.addCar()
-	return("200")
+	return(backend.addCar())
 
+@app.route("/cars", methods=['DELETE'])
+def deleteCar():
+	return(backend.deleteCar())
 
 @app.route("/service", methods=['POST'])
 def addServiceRecord():
-	backend.addServiceRecord()
-	return("")
+	return(backend.addServiceRecord())
 
 
 @app.route("/service", methods=['GET'])
 def getServiceRecords():
 	return(json.dumps(backend.getServiceRecords()))
+
+
+@app.route("/login", methods=['POST'])
+def userLogin():
+	return(backend.userLogin())
 
 
 if __name__ == '__main__':
