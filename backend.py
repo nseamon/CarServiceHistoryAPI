@@ -10,11 +10,27 @@ from settings import JWT_SECRET
 
 
 def buildResponse(body, status):
+    """
+    Returns a flask response object with type JSON
+
+    :param: body of response
+    :param: status of response
+    :return: response object
+    """
     return Response(response=body, status=status, mimetype='application/json')
 
+
 def requiresJWT():
-    
+    """
+    Validates JWT and returns response with an error response if it is invalid
+    or with the username from the decoded JWT if it is valid
+
+    :return: returns a response with on error or the user-id as a tuple
+    """
+
     jwt_token = request.headers.get('authorization', None)
+
+    # this means JWT is invalid, return the correct error response
     if not jwt_token:
         return buildResponse(body=json.dumps({'message': 'Token is missing'}), status=401)
    
@@ -30,6 +46,12 @@ def requiresJWT():
         
 
 def getUserInfo():
+    """
+    Returns basic user info
+
+    :return: basic user info
+    """
+
     session = db.Session()
     users = session.query(User)
     for user in users:
@@ -47,6 +69,12 @@ def getUserInfo():
 
 
 def addUser():
+    """
+    Adds user with data specified in the request 
+
+    :return: returns a response object with message and status code
+    """
+
     req = request.json
    
     session = db.Session()
@@ -61,8 +89,17 @@ def addUser():
     db.addObject(user)
     return buildResponse("Username successfully registered", 200)
 
+
 def addCar():
+    """
+    Adds car with fields specified in request
+
+    :return: response object with message and status code
+    """
+
     validJWT, username = requiresJWT()
+
+    # this means JWT is invalid, return the correct error response
     if validJWT:
         return validJWT
 
@@ -76,11 +113,16 @@ def addCar():
 
 
 def deleteCar():
+    """
+    Deletes car as specified in query parameters
+
+    :return: response object with status code
+    """
     validJWT, username = requiresJWT()
     
+    # this means JWT is invalid, return the correct error response
     if validJWT:
         return validJWT
-    req = request.json
     
     if not request.args.get('id'):
         return buildResponse("Missing car id", 400)
@@ -91,7 +133,15 @@ def deleteCar():
     
 
 def getCarsByOwner():
+    """
+    Fetches a list of cars owned by an owner specified with query a parameter
+
+    :return: an error response object or a response with a
+             of a list of cars for the specified owner
+    """
     validJWT, username = requiresJWT()
+
+    # this means JWT is invalid, return the correct error response
     if validJWT:
         return validJWT
 
@@ -115,6 +165,17 @@ def getCarsByOwner():
 
 
 def addServiceRecord():
+    """
+    Adds a service record with values specified in response
+
+    :return: a response object for error or success
+    """
+    validJWT, username = requiresJWT()
+
+    # this means JWT is invalid, return the correct error response
+    if validJWT:
+        return validJWT
+
     req = request.json
     session = db.Session()
     cars = session.query(Car)
@@ -134,6 +195,17 @@ def addServiceRecord():
 
 
 def getServiceRecords():
+    """
+    Returns a list of service records for specified car
+
+    :return: a response with an error or list of cars
+    """
+    validJWT, username = requiresJWT()
+
+    # this means JWT is invalid, return the correct error response
+    if validJWT:
+        return validJWT
+
     session = db.Session()
     entries = session.query(MaintenanceEntry)
     
@@ -147,16 +219,40 @@ def getServiceRecords():
                 'service': entry.service,
                 'mileage': entry.mileage,
                 'date' : entry.date,
+                'record_id' : entry.record_id,
             })
 
     session.close()
     return entries_by_car
 
 
+def deleteEntry():
+    """
+    Deletes an entry specified in query parameters 
+
+    :return: error or success response object
+    """
+    validJWT, username = requiresJWT()
+
+    # this means JWT is invalid, return the correct error response
+    if validJWT:
+        return validJWT
+    
+    if not request.args.get('id'):
+        return buildResponse("Missing entry id", 400)
+
+    db.removeEntry(id=int (request.args.get('id')))
+    
+    return buildResponse("Entry successfully deleted", status=200)
+
+
 def userLogin():
+    """
+    Method used to authenticate user
+    """
+
     username = request.json['username']
     password = request.json['password']
-
 
     hashed_password = ""
     salt = "" 

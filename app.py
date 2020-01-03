@@ -2,50 +2,56 @@ import json.encoder
 from flask import Flask, request
 from flask_cors import CORS
 
+from settings import IS_PRODUCTION
 import backend 
 
+application = Flask(__name__)
+CORS(application)
 
-app = Flask(__name__)
-CORS(app)
-
-@app.route("/users", methods=['GET'])
+@application.route("/users", methods=['GET'])
 def getUserInfo():
 	user_info = backend.getUserInfo()
 	return(user_info)
 
 
-@app.route("/users", methods=['POST'])
+@application.route("/users", methods=['POST'])
 def createUser():
 	return(backend.addUser())
 
 
-@app.route("/cars", methods=['GET'])
+@application.route("/cars", methods=['GET'])
 def getCars():
 	return(backend.getCarsByOwner())
 
 
-@app.route("/cars", methods=['POST'])
+@application.route("/cars", methods=['POST'])
 def addCar():
 	return(backend.addCar())
 
-@app.route("/cars", methods=['DELETE'])
+@application.route("/cars", methods=['DELETE'])
 def deleteCar():
 	return(backend.deleteCar())
 
-@app.route("/service", methods=['POST'])
+@application.route("/service", methods=['POST'])
 def addServiceRecord():
 	return(backend.addServiceRecord())
 
 
-@app.route("/service", methods=['GET'])
+@application.route("/service", methods=['GET'])
 def getServiceRecords():
 	return(json.dumps(backend.getServiceRecords()))
 
+@application.route("/service", methods=['DELETE'])
+def deleteServiceRecord():
+	return(backend.deleteEntry())
 
-@app.route("/login", methods=['POST'])
+@application.route("/login", methods=['POST'])
 def userLogin():
 	return(backend.userLogin())
 
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	if (IS_PRODUCTION):
+		application.run(host="0.0.0.0")
+	else:
+		application.run(debug=True)
