@@ -36,6 +36,9 @@ def deleteCar():
 def addServiceRecord():
 	return(backend.addServiceRecord())
 
+@application.route("/service", methods=['PUT'])
+def editServiceRecord():
+	return(backend.editServiceRecord())
 
 @application.route("/service", methods=['GET'])
 def getServiceRecords():

@@ -104,10 +104,10 @@ def addCar():
         return validJWT
 
     req = request.json
-    if not req['make'] or not req['model'] or not req['year'] or not req['owner']:
+    if not req['make'] or not req['model'] or not req['year']:
          return buildResponse("Missing fields", 400)
-    
-    car = Car(req['make'], req['model'], req['trim'], req['year'], req['owner'])
+
+    car = Car(req['make'], req['model'], req['trim'], req['year'], username)
     db.addObject(car)
     return buildResponse("Car successfully added", status=200)
 
@@ -193,6 +193,39 @@ def addServiceRecord():
     else:
         return "Car does not exist"
 
+
+def editServiceRecord():
+    """
+    Adds a service record with values specified in response
+
+    :return: a response object for error or success
+    """
+    validJWT, username = requiresJWT()
+
+    # this means JWT is invalid, return the correct error response
+    if validJWT:
+        return validJWT
+
+    req = request.json
+    session = db.Session()
+
+    if not req['id']:
+        buildResponse("Entry id not provided", status=400)
+   
+    entry = session.query(MaintenanceEntry).filter(MaintenanceEntry.record_id == int(req['id'])).first()
+
+    keys = req.keys()
+
+    if 'service' in keys:
+        entry.service = req['service']
+    if 'date' in keys:
+        entry.date = req['date']
+    if 'mileage' in keys:
+        entry.mileage = req['mileage']
+
+    session.commit()
+    session.close()
+    return buildResponse("Entry successfully edited", status=200)
 
 def getServiceRecords():
     """
