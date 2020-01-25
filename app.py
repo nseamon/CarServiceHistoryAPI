@@ -52,6 +52,10 @@ def deleteServiceRecord():
 def userLogin():
 	return(backend.userLogin())
 
+@application.route("/enumerations", methods=['GET'])
+def getEnumeratedValues():
+	return(backend.getEnumeratedValues())
+
 
 if __name__ == '__main__':
 	if (IS_PRODUCTION):

@@ -6,7 +6,7 @@ from flask import request, json, Response, make_response
 
 from auth import validatePassword
 from models import User, Car, MaintenanceEntry
-from settings import JWT_SECRET
+from settings import COMMON_SERVICE_PAIRS, COMMON_SERVICE_CODES, JWT_SECRET
 
 
 def buildResponse(body, status):
@@ -27,7 +27,6 @@ def requiresJWT():
 
     :return: returns a response with on error or the user-id as a tuple
     """
-
     jwt_token = request.headers.get('authorization', None)
 
     # this means JWT is invalid, return the correct error response
@@ -51,7 +50,6 @@ def getUserInfo():
 
     :return: basic user info
     """
-
     session = db.Session()
     users = session.query(User)
     for user in users:
@@ -74,7 +72,6 @@ def addUser():
 
     :return: returns a response object with message and status code
     """
-
     req = request.json
    
     session = db.Session()
@@ -96,7 +93,6 @@ def addCar():
 
     :return: response object with message and status code
     """
-
     validJWT, username = requiresJWT()
 
     # this means JWT is invalid, return the correct error response
@@ -181,17 +177,22 @@ def addServiceRecord():
     cars = session.query(Car)
     session.close()
     valid_car_id = False
+
     for car in cars:
         if car.id == req['id']:
             valid_car_id = True
             break
     
+    if 'common_services' in req.keys() and req['common_services'] and \
+         req['common_services'] not in COMMON_SERVICE_CODES:
+        return buildResponse("Invalid common service type value", status=400)
+    
     if valid_car_id:
         new_entry = MaintenanceEntry(req['id'], req['service'], req['mileage'], req['date'])
         db.addObject(new_entry)
-        return "Entry successfully added"
+        return buildResponse("Entry successfully added", status=200)
     else:
-        return "Car does not exist"
+        return buildResponse("Car does not exist", status=400)
 
 
 def editServiceRecord():
@@ -222,6 +223,10 @@ def editServiceRecord():
         entry.date = req['date']
     if 'mileage' in keys:
         entry.mileage = req['mileage']
+    if 'common_services' in keys:
+        if req['common_services'] not in COMMON_SERVICE_CODES:
+            return buildResponse("Invalid common service type value", status=400)
+        entry.common_service = req['common_services']
 
     session.commit()
     session.close()
@@ -253,6 +258,7 @@ def getServiceRecords():
                 'mileage': entry.mileage,
                 'date' : entry.date,
                 'record_id' : entry.record_id,
+                'common_services': entry.common_services
             })
 
     session.close()
@@ -282,8 +288,9 @@ def deleteEntry():
 def userLogin():
     """
     Method used to authenticate user
-    """
 
+    :return: response object with error or token for valid inputs
+    """
     username = request.json['username']
     password = request.json['password']
 
@@ -306,3 +313,15 @@ def userLogin():
         return buildResponse(json.dumps({'token': token.decode('utf-8')}), 200)
     else:
         return buildResponse("User password incorrect", 401)
+
+def getEnumeratedValues():
+    resp = {}
+    
+    if (request.args.get('type') == "COMMON_SERVICES"):
+        for tup in COMMON_SERVICE_PAIRS:
+            common_name, code = tup
+            resp.update({common_name: code})
+    else: 
+        return buildResponse(body="Invalid request", status=400)
+        
+    return buildResponse(body=json.dumps(resp), status=200)
